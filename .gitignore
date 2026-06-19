@@ -26,3 +26,4 @@ frontend/build/
 # Alembic (agar lokal SQLite test bazasi yaratilsa)
 *.db
 *.sqlite3
+backend/uploaded_files/

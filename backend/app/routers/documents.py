@@ -16,6 +16,7 @@ from app.schemas.document import (
     DocumentUploadResponse,
 )
 from app.services.tasks import extract_document_data_task
+from fastapi.responses import FileResponse
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
@@ -125,6 +126,39 @@ def get_document(
         )
 
     return document
+
+@router.get("/{document_id}/file")
+def get_document_file(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> FileResponse:
+    """
+    Serve the original uploaded file's bytes, so the "Natija" (result)
+    screen can show the actual document image instead of a generic icon.
+
+    We still check user_id ownership here, exactly like get_document --
+    a raw file path is just as sensitive as the document's metadata, so
+    skipping this check would let any logged-in user view any other
+    user's uploaded document just by guessing IDs.
+    """
+    document = (
+        db.query(Document)
+        .filter(Document.id == document_id, Document.user_id == current_user.id)
+        .first()
+    )
+
+    if document is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Document not found"
+        )
+
+    if not os.path.exists(document.file_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="File not found on disk"
+        )
+
+    return FileResponse(document.file_path)
 
 
 @router.get("/stats/summary")

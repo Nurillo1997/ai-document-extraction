@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+/*
+  These CSS custom properties define our two themes (light and dark).
+  Components reference them via Tailwind's arbitrary value syntax,
+  e.g. bg-[var(--color-surface)], so a single attribute change on <html>
+  (data-theme="light" / "dark") repaints the entire app without any
+  JavaScript re-render -- the browser handles the swap natively.
+*/
+:root,
+[data-theme="light"] {
+  --color-bg: #f9f9ff;
+  --color-surface: #ffffff;
+  --color-surface-2: #f3f2ef;
+  --color-border: #e8e6e1;
+  --color-text: #1c1b19;
+  --color-text-2: #6b6863;
+  --color-text-3: #9c9892;
+
+  --color-accent: #5b5fef;
+  --color-accent-soft: #ecedfd;
+  --color-accent-text: #3f3fc9;
+
+  --color-success: #1d9e75;
+  --color-success-soft: #e1f5ee;
+  --color-success-text: #0f6e56;
+
+  --color-danger: #d64545;
+  --color-danger-soft: #fcebeb;
+  --color-danger-text: #a32d2d;
+
+  --color-warn: #ba7517;
+  --color-warn-soft: #faeeda;
+  --color-warn-text: #854f0b;
+}
+
+[data-theme="dark"] {
+  --color-bg: #15151a;
+  --color-surface: #1d1d23;
+  --color-surface-2: #26262e;
+  --color-border: #33333d;
+  --color-text: #f1f0ed;
+  --color-text-2: #a6a4a0;
+  --color-text-3: #6f6e6b;
+
+  --color-accent: #5b5fef;
+  --color-accent-soft: #2a2a52;
+  --color-accent-text: #a6a9fa;
+
+  --color-success: #1d9e75;
+  --color-success-soft: #0f2a22;
+  --color-success-text: #5dcaa5;
+
+  --color-danger: #d64545;
+  --color-danger-soft: #3a1414;
+  --color-danger-text: #f09595;
+
+  --color-warn: #ba7517;
+  --color-warn-soft: #3a2a0a;
+  --color-warn-text: #ef9f27;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: -apple-system, "Inter", system-ui, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}

@@ -38,7 +38,7 @@ flowchart LR
     User(("User")) -->|"1: uploads document"| FE["React Frontend"]
     FE -->|"2: POST /documents"| API["FastAPI Backend"]
     API -->|"3: save file + DB row"| DB[("PostgreSQL")]
-    API -->|"4: enqueue task"| MQ["RabbitMQ"]
+    API -->|"4: enqueue task (image as base64)"| MQ["RabbitMQ"]
     MQ -->|"5: task picked up"| Worker["Celery Worker"]
     Worker -->|"6: send image"| LLM["OpenAI GPT-4o-mini Vision"]
     LLM -->|"7: structured JSON"| Worker
@@ -50,7 +50,7 @@ flowchart LR
 ## Tech Stack
 
 | Layer | Technology |
-
+|---|---|
 | Frontend | React, React Router, Tailwind CSS v4, Chart.js, Axios, Vite |
 | Backend | FastAPI, SQLAlchemy, Alembic, Pydantic, python-jose (JWT) |
 | Async processing | Celery, RabbitMQ |
@@ -127,7 +127,7 @@ cd frontend && npm run dev
 ## Environment Variables
 
 | Variable | Description |
-
+|---|---|
 | `DATABASE_URL` | PostgreSQL connection string |
 | `JWT_SECRET_KEY` | Secret key for signing JWTs |
 | `JWT_ALGORITHM` | JWT algorithm (`HS256`) |
@@ -139,33 +139,34 @@ cd frontend && npm run dev
 ## API Reference
 
 | Method | Endpoint | Description | Auth |
-
-| POST | `/auth/signup` | Register a new user | ✅ |
-| POST | `/auth/login` | Log in, get JWT | ✅ |
+|---|---|---|---|
+| POST | `/auth/signup` | Register a new user | ❌ |
+| POST | `/auth/login` | Log in, get JWT | ❌ |
 | POST | `/documents` | Upload a document | ✅ |
 | GET | `/documents` | List history (status filter) | ✅ |
 | GET | `/documents/{id}` | Get extraction result | ✅ |
 | GET | `/documents/{id}/file` | Get original uploaded file | ✅ |
 | GET | `/documents/stats/summary` | Aggregate stats | ✅ |
-| GET | `/health` | Health check | ✅ |
+| GET | `/health` | Health check | ❌ |
 
 ## Problems Solved
 
-#  Problem  Fix 
-
- 1  `bcrypt` 5.x + `passlib` 1.7.4 conflict (SIGSEGV / attribute error) | Pinned `bcrypt==4.0.1` |
- 2  macOS: Celery `prefork` pool + network I/O = SIGSEGV | `--pool=solo` for local dev; **confirmed unnecessary in Linux containers** — default `prefork` works fine in Docker |
- 3  OpenAI `429 insufficient_quota` on fresh accounts | Set up billing |
- 4  Celery worker ran as root inside the container (security risk) | Added a dedicated `appuser` in the Dockerfile, runs as non-root |
- 5  Vite bakes `VITE_API_BASE_URL` in at build time, not runtime | Passed correctly via a Docker build arg |
+| # | Problem | Fix |
+|---|---|---|
+| 1 | `bcrypt` 5.x + `passlib` 1.7.4 conflict (SIGSEGV / attribute error) | Pinned `bcrypt==4.0.1` |
+| 2 | macOS: Celery `prefork` pool + network I/O = SIGSEGV | `--pool=solo` for local dev; **confirmed unnecessary in Linux containers** — default `prefork` works fine in Docker and on Render |
+| 3 | OpenAI `429 insufficient_quota` on fresh accounts | Set up billing |
+| 4 | Celery worker ran as root inside the container (security risk) | Added a dedicated `appuser` in the Dockerfile, runs as non-root |
+| 5 | Vite bakes `VITE_API_BASE_URL` in at build time, not runtime | Passed correctly via a Docker build arg |
+| 6 | Production database (`documents_db`) didn't actually exist yet on the shared Render Postgres instance | Created it via `psql`, then ran `alembic upgrade head` directly against production |
+| 7 | API and Celery Worker are separate Render services with no shared filesystem — the worker got `FileNotFoundError` trying to read files the API saved to its own local disk | The API now base64-encodes the image and passes it directly through the Celery task payload (via RabbitMQ), so the worker never touches local disk |
 
 ## Live Demo
 
-> 🚧 To be added after deployment to Render.com
-
-- Frontend: _coming soon_
-- API: _coming soon_
+- Frontend: https://ai-document-extraction-frontend.onrender.com
+- API: https://ai-document-extraction-api.onrender.com
 
 ## Author
 
 **Nurillo** — [GitHub](https://github.com/Nurillo1997)
+

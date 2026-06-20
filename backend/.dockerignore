@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+.env
+.env.example
+uploaded_files/*
+.git/
+.pytest_cache/
+*.log

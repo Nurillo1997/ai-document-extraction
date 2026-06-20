@@ -16,6 +16,7 @@ from app.schemas.document import (
     DocumentUploadResponse,
 )
 from app.services.tasks import extract_document_data_task
+from app.services.vision_llm import _encode_image_as_data_url
 from fastapi.responses import FileResponse
 
 router = APIRouter(prefix="/documents", tags=["documents"])
@@ -75,8 +76,8 @@ async def upload_document(
     db.add(new_document)
     db.commit()
     db.refresh(new_document)
-
-    extract_document_data_task.delay(new_document.id)
+    image_data_url = _encode_image_as_data_url(stored_path)
+    extract_document_data_task.delay(new_document.id, image_data_url)
 
     return new_document
 

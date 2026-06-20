@@ -49,18 +49,23 @@ def _encode_image_as_data_url(file_path: str) -> str:
     return f"data:{mime_type};base64,{encoded}"
 
 
-def extract_document_data(file_path: str) -> DocumentExtractionResult:
+def extract_document_data(image_data_url: str) -> DocumentExtractionResult:
     """
     Send a document image to the Vision LLM and return validated,
     structured data.
+
+    Takes an already-encoded base64 data URL rather than a file path: the
+    caller (the upload endpoint) reads the file from its own local disk and
+    encodes it before enqueueing the Celery task. The Celery worker runs in
+    a completely separate container -- in production, on a separate machine
+    from the API -- with no access to that disk, so passing a file path
+    here would fail with FileNotFoundError.
 
     The OCR-free approach: instead of running a separate text-extraction
     step and then parsing the text, we send the raw image directly to a
     model that can both "read" the image and reason about its structure
     in a single call.
     """
-    image_data_url = _encode_image_as_data_url(file_path)
-
     try:
         response = client.responses.parse(
             model="gpt-4o-mini",

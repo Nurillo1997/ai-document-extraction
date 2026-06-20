@@ -6,7 +6,7 @@ from app.services.vision_llm import VisionExtractionError, extract_document_data
 
 
 @celery_app.task(name="extract_document_data")
-def extract_document_data_task(document_id: int) -> None:
+def extract_document_data_task(document_id: int, image_data_url: str) -> None:
     """
     Celery task that processes one uploaded document: calls the Vision LLM,
     validates its response, and saves the extracted fields to PostgreSQL.
@@ -33,7 +33,7 @@ def extract_document_data_task(document_id: int) -> None:
         db.commit()
 
         try:
-            result = extract_document_data(document.file_path)
+            result = extract_document_data(image_data_url)
         except VisionExtractionError as exc:
             document.status = DocumentStatus.FAILED
             document.error_message = str(exc)

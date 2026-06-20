@@ -23,6 +23,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",  # Vite's default dev server port
         "http://localhost:3000",  # fallback, in case a different React setup is used
+        "https://ai-document-extraction-frontend.onrender.com",  # production frontend (Render)
     ],
     allow_credentials=True,
     allow_methods=["*"],
